@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+
+{% block content %}
+
+
+<div class="min-h-screen flex items-center justify-center bg-gray-200">
+    <div class="bg-white p-8 rounded shadow-lg">
+      <div v-if="!quizOver">
+        <h1 class="text-3xl font-semibold mb-4">Which of the following is an example of a programming language used for developing web-based applications?</h1>
+        <div v-for="(option, index) in options" :key="index" class="mb-4">
+          <label class="flex items-center border rounded-lg p-2 hover:bg-gray-100">
+            <input
+              type="radio"
+              :value="option"
+              v-model="selectedOption"
+              class="mr-2 cursor-pointer"
+            >
+            <span>JAVA</span>
+          </label>
+          <label class="flex items-center border rounded-lg p-2 my-2">
+            <input
+              type="radio"
+              :value="option"
+              v-model="selectedOption"
+              class="mr-2 cursor-pointer"
+            >
+            <span>Microsoft Excel</span>
+          </label>
+          <label class="flex items-center border rounded-lg p-2 my-2">
+            <input
+              type="radio"
+              :value="option"
+              v-model="selectedOption"
+              class="mr-2 cursor-pointer"
+            >
+            <span>Adobe Illustator</span>
+          </label>
+          <label class="flex items-center border rounded-lg p-2 my-2">
+            <input
+              type="radio"
+              :value="option"
+              v-model="selectedOption"
+              class="mr-2 cursor-pointer"
+            >
+            <span>Photoshop</span>
+          </label>
+        </div>
+        <div class="text-center mt-6">
+          <button @click="checkAnswer" class="bg-blue-500 text-white px-4 py-2 rounded">
+            Next
+          </button>
+        </div>
+        <div class="text-right mt-4">
+          <p>Time Remaining: <strong>04:45</strong></p>
+        </div>
+      </div>
+      <div v-else>
+        <!-- <h2 class="text-2xl font-semibold mb-4">Test Over!</h2>
+        <p>Your score: <strong>45</strong></p> -->
+      </div>
+    </div>
+  </div>
+
+{% endblock content %}

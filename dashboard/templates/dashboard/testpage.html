@@ -1,0 +1,307 @@
+{% extends 'base.html' %}
+{% load server_url %}
+{% block content %}
+
+
+
+<div id="app">
+<div class="min-h-screen flex items-center justify-center bg-gray-200">
+<div class="bg-white p-8 rounded shadow-lg">
+
+  
+    <div v-if="!quizOver">
+    <div v-if="question">
+      <h1 class="text-3xl font-semibold mb-4">[[question.question]]</h1>
+      
+      <div v-for="(option, index) in question.answers" :key="index" class="mb-4">
+        <label class="flex items-center border rounded-lg p-2 hover:bg-gray-100">
+          <input
+            type="radio"
+            :value="option.id"
+            v-model="selectedOption"
+            class="mr-2 cursor-pointer"
+          >
+          <span>[[option.answer]]</span>
+        </label>
+        <!-- <label class="flex items-center border rounded-lg p-2 my-2">
+          <input
+            type="radio"
+            :value="option"
+            v-model="selectedOption"
+            class="mr-2 cursor-pointer"
+          >
+          <span>Microsoft Excel</span>
+        </label>
+        <label class="flex items-center border rounded-lg p-2 my-2">
+          <input
+            type="radio"
+            :value="option"
+            v-model="selectedOption"
+            class="mr-2 cursor-pointer"
+          >
+          <span>Adobe Illustator</span>
+        </label>
+        <label class="flex items-center border rounded-lg p-2 my-2">
+          <input
+            type="radio"
+            :value="option"
+            v-model="selectedOption"
+            class="mr-2 cursor-pointer"
+          >
+          <span>[[question]]</span>
+        </label> -->
+      </div>
+    </div>
+      <div class="text-center mt-6">
+        <button @click="checkAnswer" class="bg-blue-500 text-white px-4 py-2 rounded">
+          Next
+        </button>
+
+      </div>
+      <!-- <div class="text-right mt-4">
+        <p>Time Remaining: <strong>04:45</strong></p>
+      </div> -->
+    </div>
+    <div v-else>
+      <h2 class="text-2xl font-semibold mb-4">Test Over!</h2>
+      <p>Your score: <strong>45</strong></p>
+    </div>
+  </div>
+  </div>
+</div>
+{% endblock content %}
+
+
+{% block javascript %}
+
+<!-- Axios JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js"></script>
+
+<script>
+
+
+    //    new Vue({
+    //       el: '#app',
+    //       data: {
+    //         formData: {
+    //           id: 342,
+    //           question: "",
+    //           answers: [
+    //             { id: 1346, answer: "", is_right: false },
+    //             // { id: 1347, answer: "", is_right: false },
+    //             // { id: 1348, answer: "", is_right: true },
+    //             // { id: 1349, answer: "", is_right: true },
+    //           ],
+    //           marks: 1
+    //         }
+    //       },
+    //       methods: {
+    //         submitForm() {
+    //           // Process the form data here
+    //           console.log(this.formData);
+    //         }
+    //       },
+    //       mounted() {
+    //     // Code to execute when the component is mounted
+    //     console.log('Component is mounted!');
+    //     // You can perform initialization or API calls here
+    //   }
+    //     });
+    
+    
+    // axios.defaults.baseURL = 'http://127.0.0.1:8000/mcq';
+    
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const mycsrftoken = getCookie('csrftoken');
+    
+    axios.defaults.baseURL = '{{request|server_protocol}}{{request.get_host}}/question';
+    axios.defaults.headers.common['X-Csrftoken'] = mycsrftoken;
+    
+    
+    axios.defaults.withCredentials= true;
+    
+    new Vue({
+      el: '#app',
+      delimiters: ['[[', ']]'],
+      data:{
+        quizOver:false,
+        selectedOption:null,
+          question: '',
+          attempt_id:'',
+          answers: [
+            {
+              answer: '',
+              is_right: false,
+            },
+          ],
+          start_time:null,
+          end_time:null
+        },
+    
+    
+    methods: {
+        checkAnswer(){
+            console.log('test')
+            if(this.selectedOption === null || this.selectedOption === undefined){
+              return
+            }
+            this.submitQuestionAttempt()
+            this.selectedOption=null
+            this.getQuestion()
+            this.start_time = new Date().getTime();
+            
+        },
+
+        async submitQuestionAttempt(){
+
+          this.end_time = new Date().getTime();
+
+          // if (this.start_time !== 0 && this.end_time !== 0) {
+    const timeDifference = (this.end_time - this.start_time) / 1000; 
+  // }// Calculate time difference in seconds
+  // timeDifference = 0
+  console.log(timeDifference)
+          const data = {
+            test_attempt_id:this.attempt_id,
+            question:this.question.id,
+            answer:this.selectedOption,
+            timetaken:timeDifference,
+            right_attempt:this.checkRightAnswer()
+          }
+          console.log(data)
+
+
+          // Make API CALL
+         
+          axios
+        .post('submitquestionattempt/',data)
+        .then((response) => {
+          
+        })
+        .catch((error) => {
+          console.log(error.response)
+        })
+
+        this.start_time = null;
+        this.end_time = null;
+
+        },
+        checkRightAnswer() {
+          // Get the correct answer from the question data
+          const correctAnswer = this.question.answers.find(answer => answer.is_right);
+
+          // Check if the selected option matches the correct answer
+          return correctAnswer && this.selectedOption === correctAnswer.answer;
+        },
+
+        
+
+
+    
+     
+    // validateForm(){
+    //    if(this.question && this.answers) 
+    //    {
+    //     return true
+    //    }
+    //    if(!this.question){
+    //     this.errors.push("Question is required!")
+    //    }
+    //    return false
+    // },
+    SubmitQuestion(e) {
+      if (this.editEnable) {
+        // if(this.validateForm()){
+    
+            axios
+          .patch(
+            `api/v1/question/{{category.id}}/${this.edit_question.id}/`,
+            this.edit_question
+          )
+          .then((response) => {
+            toastr.clear()
+            const displaymessage = `Success !\n Questions Updated`
+            toastr.warning(displaymessage, 'Updated')
+            this.getQuestions()
+            this.editEnable = false
+          })
+    
+       
+        return
+      }
+      const formData = {
+        question: this.question,
+        answers: this.answers,
+      }
+      console.log(formData)
+      axios
+        .post('api/v1/question/{{category.id}}/', formData)
+        .then((response) => {
+          console.log(response)
+          // this.questions.push(response.data)
+          // this adds to last of array
+          // use unshift to add to the first@@
+          this.questions.unshift(response.data)
+    
+          toastr.clear()
+          const displaymessage = `Success !\n Questions created`
+          toastr.success(displaymessage, 'Success')
+          //  reset form
+          this.question = ''
+          this.answers = [
+            {
+              answer: '',
+              is_right: false,
+            },
+          ]
+        })
+        .catch((error) => {
+          console.log(error.response)
+          toastr.clear()
+          const data = error.response.data
+          let message = ''
+          data.answers.forEach((answer) => {
+            message = message + `<li>${answer.answer[0]}</li>`
+          })
+          const displaymessage = `Error ${error.response.data.question} ${message}`
+          toastr.error(displaymessage, 'Error')
+        })
+    },
+    async getQuestion() {
+      const response = await axios.get('getnextquestion/{{test_id}}/')
+      this.question = '' // empty the question var
+      this.question = response.data.question
+      this.attempt_id = response.data['attempt_id']
+      console.log(this.question)
+  
+    },
+    
+    },
+    mounted(){
+        console.log("mounted");
+        this.getQuestion();
+    }
+    });
+    
+    </script>
+     
+
+{% endblock javascript %}
+
